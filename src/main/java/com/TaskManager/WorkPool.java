@@ -7,9 +7,11 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class WorkPool {
 
 	private int maxThreads;
-	private final BlockingQueue<Task> queue = new LinkedBlockingQueue<>();
+	private final Queue queue = new Queue();
+	private final Queue waitQueue = new Queue();
 	private final ArrayList<Worker> threadList = new ArrayList<Worker>();
 	
+	//CONSTRUTOR CRIA AS THREADS
 	public WorkPool(int maxThreads) {
 		this.maxThreads = maxThreads;
 		for(int i = 0; i < maxThreads; i++) {
@@ -19,6 +21,7 @@ public class WorkPool {
 		}
 	}
 	
+	//TROCA A QUANTIDADE DE THREADS
 	public void setMaxThreads(int MaxThreads){
 		this.maxThreads = MaxThreads;
 		if (maxThreads > threadList.size()) {
@@ -37,8 +40,16 @@ public class WorkPool {
 		}
 	}
 	
-    public void submit(Task task, Priority pri) {
-        queue.add(task);
+    public void submit(TaskRecord tk) {
+        queue.add(tk);
     }
    
+    //METODOS PARA ADICAO DE TAREFAS SEM EXECUTAR
+    public void submitAndWait(TaskRecord tk) {
+    	waitQueue.add(tk);
+    }
+    
+    public void execute() {
+    	queue.addQueue(waitQueue);
+    }
 }

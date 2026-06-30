@@ -5,31 +5,65 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class Queue {
 
-	private final BlockingQueue<Task> HIGH = new LinkedBlockingQueue<>();
-	private final BlockingQueue<Task> MEDIUM = new LinkedBlockingQueue<>();
-	private final BlockingQueue<Task> LOW = new LinkedBlockingQueue<>();
+	private final BlockingQueue<TaskRecord> HIGH = new LinkedBlockingQueue<>();
+	private final BlockingQueue<TaskRecord> MEDIUM = new LinkedBlockingQueue<>();
+	private final BlockingQueue<TaskRecord> LOW = new LinkedBlockingQueue<>();
 	
-	public void add(Task task, Priority pri) {
-		switch (pri) {
-			case HIGH: HIGH.add(task); break;
-			case MEDIUM: MEDIUM.add(task); break;
-			case LOW: LOW.add(task); break;
+	public synchronized void add(TaskRecord tk) {
+		switch (tk.getPriority()) {
+			case HIGH: HIGH.add(tk); break;
+			case MEDIUM: MEDIUM.add(tk); break;
+			case LOW: LOW.add(tk); break;
 		}
+		notifyAll();
 	}
 	
-	public Task get() {
+	public synchronized TaskRecord get() {
 		try {
-			if (! HIGH.isEmpty()) {
-				return HIGH.take();
-			}
-			else if (! MEDIUM.isEmpty()) {
-				return MEDIUM.take();
-			} else if (! LOW.isEmpty()) {
-				return LOW.take();
-			}
+		    while (HIGH.isEmpty() &&
+		            MEDIUM.isEmpty() &&
+		            LOW.isEmpty()) {
+
+		         wait();
+		     }
+		    TaskRecord task = HIGH.poll();
+
+		    if (task != null)
+		        return task;
+		    
+		    task = MEDIUM.poll();
+
+		    if (task != null)
+		        return task;
+
+		    return LOW.poll();
 		}catch (Exception e) {
 			e.printStackTrace();
 		}
+		return null;
+	}
+	
+	public boolean isEmpty() {
+		return (HIGH.isEmpty() && MEDIUM.isEmpty() && LOW.isEmpty());
+	}
+	
+	public void addQueue(Queue queue) {
+		while(!queue.HIGH.isEmpty()){
+
+		    HIGH.add(queue.HIGH.poll());
+
+		}
+		while(!queue.MEDIUM.isEmpty()){
+
+			MEDIUM.add(queue.MEDIUM.poll());
+
+		}
+		while(!queue.LOW.isEmpty()){
+
+			LOW.add(queue.LOW.poll());
+
+		}
+		notifyAll();
 	}
 	
 }
